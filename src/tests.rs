@@ -11,12 +11,6 @@ mod tests {
     use crate::write;
 
     #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-
-    #[test]
     fn test1() {
         let temp = TempDir::default();
         let path = PathBuf::from(temp.as_ref()).join("rust_bed_reader_writer_test.bed");

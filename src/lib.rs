@@ -39,7 +39,9 @@ pub fn write(
     assert!(iid_count % 4 == 0, "iid_count must be a multiple of 4");
     let iid_count_div4 = iid_count / 4;
 
-    let val = nd::Array::random((iid_count, sid_count), Uniform::new(0., 10.));
+    let mut val: nd::Array2<f64> =
+        nd::Array::random((iid_count, sid_count), Uniform::new(0.0, 4.0));
+    val.mapv_inplace(|x| x.floor());
 
     let mut writer = BufWriter::new(File::create(filename)?);
     writer.write_all(&[BED_FILE_MAGIC1, BED_FILE_MAGIC2, 0x01])?;
