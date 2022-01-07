@@ -9,6 +9,7 @@ edition = "2021"
 thiserror = "1.0.30"
 ndarray = { version = "0.15.4"}
 ndarray-rand = "0.14.0"
+dpc-pariter = "0.2.1"
 
 [dev-dependencies]
 temp_testdir = "0.2.3"
