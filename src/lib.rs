@@ -36,7 +36,7 @@ fn write_internal(
 ) -> Result<(), BedError> {
     let mut writer = BufWriter::new(File::create(filename)?);
 
-    let result_list: Result<Vec<()>, BedError> = 
+    let result_list : Result<Vec<()>, BedError> = 
         // 'scope' checks that all threads finish before returning
         //cmk scope(|scope| {
         // for each column in the array
@@ -59,12 +59,12 @@ fn write_internal(
                     Ok(bytes_vector)
                 }
             })
-            .threads(num_threads)
+            // cmk .threads(num_threads)
             .map(|bytes_vector: Result<_, BedError>| {
                 // Write the bytes vector, they must be in order.
                 writer.write_all(&bytes_vector?)?;
                 Ok(())
-            }
+            })
             .collect();
     //     )
     // })
