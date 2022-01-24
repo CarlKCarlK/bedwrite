@@ -36,15 +36,16 @@ fn write_internal(
 ) -> Result<(), BedError> {
     let mut writer = BufWriter::new(File::create(filename)?);
 
-    let result_list : Result<Vec<()>, BedError> = 
-        // 'scope' checks that all threads finish before returning
-        //cmk scope(|scope| {
+    // Return this expression to the caller.
+    // The 'scope' guarantees that all threads end, thus
+    // no thread  can continue borrowing 'val' after 'scope'.
+    scope(|scope| {
         // for each column in the array
         val.axis_iter(nd::Axis(1))
             // '.parallel_map_scoped' works with 'scope' to avoid
             // a 'borrowed value does not live long enough' error.
-            .parallel_map({ ///cmk _scoped(scope, {
-                move |column| {
+            .parallel_map_scoped(scope, {
+                |column| {
                     // Convert each column into a bytes_vector
                     let mut bytes_vector: Vec<u8> = vec![0; iid_count_div4]; // inits to 0
                     for (iid_i, &v0) in column.iter().enumerate() {
@@ -59,20 +60,17 @@ fn write_internal(
                     Ok(bytes_vector)
                 }
             })
-            // cmk .threads(num_threads)
-            .map(|bytes_vector: Result<_, BedError>| {
-                // Write the bytes vector, they must be in order.
+            // Set the number of threads to use
+            .threads(num_threads)
+            // Sequentially, write each column to the file.
+            // If there is an error, stop early and return it.
+            .try_for_each(|bytes_vector: Result<_, BedError>| {
                 writer.write_all(&bytes_vector?)?;
                 Ok(())
             })
-            .collect();
-    //     )
-    // })
-    // .map_err(|_e| BedError::PanickedThread())?;
-
-    result_list?;
-
-    Ok(())
+    })
+    // In the unlikely event of a scope error, return this error.
+    .map_err(|_e| BedError::PanickedThread())?
 }
 
 #[derive(Error, Debug)]
